@@ -20,29 +20,23 @@ learning-hub-backend
 
 Both apps install this package and import from it. Eventually every Markdown rule, parser, validator, and guide will live here.
 
-## Current phase — Phase 3 (validator moved; frontend realtime validation next)
-
-Phases completed so far:
+## Current phase — Phase 5 (all planned phases complete)
 
 - **Phase 1 — foundation.** Purely static/utility content:
   - `constants/` — the note-format guide (`NOTE_FORMAT_GUIDE`), its rules (`MARKDOWN_RULES`), the supported block list (`SUPPORTED_BLOCKS`), and the reference example note (`EXAMPLE_MARKDOWN`).
   - `prompts/` — the AI "generate a note" and "restructure a note" prompt templates (`AI_PROMPT`, `RESTRUCTURE_PROMPT`).
   - `slug/` — `slugify()`, the pure string-transform used for both URL slugs and heading-anchor ids. (Note/module slug *generation*, which is DB-counter/crypto/time dependent, stays in `learning-hub-backend`.)
   - `types/` — shared shapes for `Block`, `Inline`, `Section`, `TocEntry`, `ParsedNote`, `NoteFormatGuide`, and a `MarkdownValidationResult` diagnostic type.
-- **Phase 2 — parser.** `parser/` — the `markdown-it` config (`markdownIt`, `parseMarkdownSource`, `stripBoilerplate`), the token-to-block converter (`tokensToBlocks`, `convertInline`), the section builder (`groupSections`), the TOC builder (`buildToc`), and the top-level orchestrator (`transformMarkdownTokens`). `learning-hub-backend` keeps its own `markdownParser.ts`/`markdownTransformer.ts` as thin compatibility wrappers re-exporting from this package — every other backend module continues importing from those same file paths unchanged.
-- **Phase 3 — validator.** `validator/` — `validateMarkdownSource(raw, cleaned, tokens)` (same signature as the backend's original) plus a new convenience `validateMarkdown(raw)` that runs `parseMarkdownSource` + validation in one call for callers (like a frontend editor) that only have raw text. `learning-hub-backend`'s `markdownValidator.ts` becomes a compatibility wrapper too. The frontend now uses `validateMarkdown()` for realtime validation as the user types (additive UI feedback only — the backend's own validation on save/submit is unchanged and remains authoritative).
+- **Phase 2 — parser.** `parser/` — the `markdown-it` config (`markdownIt`, `parseMarkdownSource`, `stripBoilerplate`), the token-to-block converter (`tokensToBlocks`, `convertInline`), the section builder (`groupSections`), the TOC builder (`buildToc`), and the top-level orchestrator (`transformMarkdownTokens`).
+- **Phase 3 — validator.** `validator/` — `validateMarkdownSource(raw, cleaned, tokens)` plus a `validateMarkdown(raw)` convenience entry point for callers with only raw text (used by the frontend's realtime validation).
+- **Phase 4 — full backend replacement.** `learning-hub-backend` no longer has its own parser/transformer/validator implementation at all — it imports directly from this package. The Phase 2/3 compatibility wrapper files were deleted.
+- **Phase 5 — formatter + editor integration.** `formatter/` — `formatMarkdown(raw)`, a whitespace/blank-line normalizer (blank line before/after headings and fenced code blocks, collapsed blank-line runs, trimmed trailing whitespace, exactly one trailing newline; fence-aware and idempotent). Never touches note content, only formatting conventions. The frontend's `MarkdownCodeEditor` wires `validateMarkdown()` into a real CodeMirror `linter()`/`lintGutter()` extension (inline gutter dots + hover tooltips + the native diagnostics panel) and adds an "Auto Fix" button that applies `formatMarkdown()`.
 
-**Zero behavior change** remains the goal at every phase for existing code paths — a parser regression test (`tests/parser.test.ts`) and a validator regression test (`tests/validator.test.ts`) assert against the reference example note to catch drift.
+**Zero behavior change** was the goal through Phase 4 for all pre-existing code paths — `tests/parser.test.ts` and `tests/validator.test.ts` assert against the reference example note to catch drift. Phase 5 is genuinely new functionality (neither app had a formatter or CodeMirror linting before), covered by `tests/formatter.test.ts` (idempotency, fence-awareness, blank-line rules).
 
 ## Future roadmap
 
-1. ~~Parser (`markdown-it` config)~~ — done, Phase 2.
-2. ~~Validator~~ — done, Phase 3.
-3. Format guide fully replacing each app's own copy (currently additive only).
-4. Replace the backend's own parser entirely with this package (retire the compatibility wrappers).
-5. Formatter, CodeMirror diagnostics, auto-fix.
-
-This incremental approach minimizes risk and keeps both applications stable throughout the migration. See `Shared Markdown Package Plan.md` and `Phase 1 - Create Shared Markdown Repository.md` in the `learning-hub` workspace root for the full plan.
+All originally planned phases are complete. Possible future work (not yet scoped): replacing each app's remaining direct format-guide fetch with this package's `NOTE_FORMAT_GUIDE` outright (currently additive only — the backend still serves its own `GET /api/note-format`), and richer per-line diagnostic positions once the validator tracks line numbers instead of aggregate message strings.
 
 ## Install
 
