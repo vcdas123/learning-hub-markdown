@@ -8,3 +8,5 @@ export * from "./types/index.js";
 export * from "./parser/index.js";
 // Phase 3: validator.
 export * from "./validator/index.js";
+// Phase 5: formatter.
+export * from "./formatter/index.js";
