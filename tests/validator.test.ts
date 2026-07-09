@@ -1,0 +1,37 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { validateMarkdown, validateMarkdownSource, EXAMPLE_MARKDOWN } from "../src/index.js";
+
+test("the reference example note is valid with no errors/warnings", () => {
+  const result = validateMarkdown(EXAMPLE_MARKDOWN);
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.errors, []);
+  assert.deepEqual(result.warnings, []);
+});
+
+test("an empty note is an error", () => {
+  const result = validateMarkdown("   \n\n  ");
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.errors, ["The note is empty."]);
+});
+
+test("missing title heading and missing section heading are both flagged", () => {
+  const result = validateMarkdown("Just a paragraph, no headings at all.");
+  assert.equal(result.ok, false);
+  assert.ok(result.errors.includes("Must start with a level-1 title heading, e.g. '# My Title'."));
+  assert.ok(result.errors.includes("Must contain at least one section heading, e.g. '## Section Title'."));
+});
+
+test("a fenced code block with no language is a warning, not an error", () => {
+  const raw = "# Title\n\n## Section\n\n```\nno language\n```\n";
+  const result = validateMarkdown(raw);
+  assert.equal(result.ok, true);
+  assert.ok(result.warnings.some((w) => w.includes("no language")));
+});
+
+test("a manual Table of Contents / Navigation section is a warning", () => {
+  const raw = "# Title\n\n## Table of Contents\n\n- link\n\n## Section\n\ntext\n\n## Navigation\n\n[Next]\n";
+  const result = validateMarkdownSource(raw, raw, []);
+  assert.ok(result.warnings.some((w) => w.includes("Table of Contents")));
+  assert.ok(result.warnings.some((w) => w.includes("Navigation")));
+});

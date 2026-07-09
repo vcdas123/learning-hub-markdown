@@ -6,3 +6,5 @@ export * from "./slug/index.js";
 export * from "./types/index.js";
 // Phase 2: markdown-it config, token parser, section/TOC builders.
 export * from "./parser/index.js";
+// Phase 3: validator.
+export * from "./validator/index.js";
