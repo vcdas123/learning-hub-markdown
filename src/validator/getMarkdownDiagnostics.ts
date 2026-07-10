@@ -74,14 +74,14 @@ export function getMarkdownDiagnostics(raw: string): MarkdownDiagnosticItem[] {
   lines.forEach((line, idx) => {
     if (/^##\s+Table of Contents/.test(line)) {
       diagnostics.push({
-        message: "A manual 'Table of Contents' was found; it will be removed.",
+        message: "A manual 'Table of Contents' was found — the platform generates navigation automatically, so this is usually unnecessary.",
         severity: "warning",
         line: idx + 1,
       });
     }
     if (/^##\s+Navigation/.test(line)) {
       diagnostics.push({
-        message: "A manual 'Navigation' section was found; it will be removed.",
+        message: "A manual 'Navigation' section was found — the platform generates navigation automatically, so this is usually unnecessary.",
         severity: "warning",
         line: idx + 1,
       });

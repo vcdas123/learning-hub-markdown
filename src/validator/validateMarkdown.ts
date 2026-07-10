@@ -45,11 +45,11 @@ export function validateMarkdownSource(
   }
 
   if (/^##\s+Table of Contents/m.test(raw)) {
-    warnings.push("A manual 'Table of Contents' was found; it will be removed.");
+    warnings.push("A manual 'Table of Contents' was found — the platform generates navigation automatically, so this is usually unnecessary.");
   }
 
   if (/^##\s+Navigation/m.test(raw)) {
-    warnings.push("A manual 'Navigation' section was found; it will be removed.");
+    warnings.push("A manual 'Navigation' section was found — the platform generates navigation automatically, so this is usually unnecessary.");
   }
 
   return { ok: errors.length === 0, errors, warnings };

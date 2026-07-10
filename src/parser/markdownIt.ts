@@ -33,21 +33,25 @@ export interface ParsedMarkdownSource {
   tokens: MarkdownToken[];
 }
 
+// Historically stripped a "[Previous] [Home] [Next >]" nav-link line, a
+// manual "## Table of Contents" block, and a "## Navigation" footer, on the
+// theory that the platform auto-generates its own navigation, so a
+// downloaded-then-reuploaded note might otherwise duplicate it. In practice
+// nothing in either app ever generates those patterns (no export/download
+// path writes them into note content), so the only real effect was a live
+// data-loss bug: the "## Navigation" regex had no line-start anchor, so the
+// literal text matching mid-line — e.g. inside inline code in prose that
+// merely *discussed* the feature — combined with the `s` (dotAll) flag's
+// greedy `.*`, silently deleted everything from that point to the end of
+// the note.
+//
+// Per product decision: never silently strip user content. If a note
+// contains something the platform doesn't want (like a manual Table of
+// Contents/Navigation section), that's surfaced as a validator
+// warning/error instead — see validateMarkdownSource/getMarkdownDiagnostics
+// — never deleted out from under the author.
 export function stripBoilerplate(input: string): string {
-  return input
-    .replace(/\[[^\]]*?Previous\].*?\n/g, "")
-    .replace(/\[Home\].*?\n/g, "")
-    .replace(/\[[^\]]*?Next >\].*?\n/g, "")
-    // Anchored to the start of a line (^ + m flag) so this only strips an
-    // actual auto-generated heading, not incidental mentions of the same
-    // text elsewhere — e.g. inline code like `## Navigation` inside prose
-    // describing this very feature. Without the anchor, "## Navigation"
-    // matching mid-line combined with the `s` flag's dotAll `.*` would
-    // silently delete everything from that point to the end of the note.
-    .replace(/^## Table of Contents.*?\n---/gms, "")
-    .replace(/^## Navigation.*/gms, "")
-    .replace(/^---\s*\n/gm, "")
-    .trim();
+  return input.trim();
 }
 
 export function parseMarkdownSource(raw: string): ParsedMarkdownSource {
