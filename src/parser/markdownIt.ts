@@ -38,8 +38,14 @@ export function stripBoilerplate(input: string): string {
     .replace(/\[[^\]]*?Previous\].*?\n/g, "")
     .replace(/\[Home\].*?\n/g, "")
     .replace(/\[[^\]]*?Next >\].*?\n/g, "")
-    .replace(/## Table of Contents.*?\n---/gs, "")
-    .replace(/## Navigation.*/gs, "")
+    // Anchored to the start of a line (^ + m flag) so this only strips an
+    // actual auto-generated heading, not incidental mentions of the same
+    // text elsewhere — e.g. inline code like `## Navigation` inside prose
+    // describing this very feature. Without the anchor, "## Navigation"
+    // matching mid-line combined with the `s` flag's dotAll `.*` would
+    // silently delete everything from that point to the end of the note.
+    .replace(/^## Table of Contents.*?\n---/gms, "")
+    .replace(/^## Navigation.*/gms, "")
     .replace(/^---\s*\n/gm, "")
     .trim();
 }
