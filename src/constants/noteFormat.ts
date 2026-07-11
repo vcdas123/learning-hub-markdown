@@ -15,7 +15,6 @@ export const NOTE_FORMAT_GUIDE = {
   summary: "How to author a Markdown (.md) note this platform can parse correctly.",
   rules: MARKDOWN_RULES,
   structure: {
-    filename: "NN. Title.md   (NN = order number, e.g. 06 or 01.1)",
     title: "# Title           (level-1 heading, exactly one, on the first line)",
     preamble: "Optional text right after the title (before the first '## ')",
     section: "## Section Title (level-2 heading -> appears in navigation)",

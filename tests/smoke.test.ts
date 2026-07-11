@@ -15,8 +15,8 @@ test("SUPPORTED_BLOCKS is the expected static list", () => {
   ]);
 });
 
-test("MARKDOWN_RULES has 8 rules", () => {
-  assert.equal(MARKDOWN_RULES.length, 8);
+test("MARKDOWN_RULES has 7 rules", () => {
+  assert.equal(MARKDOWN_RULES.length, 7);
 });
 
 test("NOTE_FORMAT_GUIDE composes its prompts with the example markdown embedded", () => {
