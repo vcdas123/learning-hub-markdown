@@ -20,6 +20,7 @@ export function validateMarkdownSource(
 
   const lines = cleaned.split(/\r?\n/);
   const firstNonEmpty = lines.find((line) => line.trim()) || "";
+  const h1Lines: number[] = [];
 
   if (!/^#\s+\S/.test(firstNonEmpty)) {
     errors.push("Must start with a level-1 title heading, e.g. '# My Title'.");
@@ -30,7 +31,7 @@ export function validateMarkdownSource(
   }
 
   let inFence = false;
-  for (const line of lines) {
+  for (const [idx, line] of lines.entries()) {
     const value = line.trim();
     if (value.startsWith("```")) {
       if (!inFence) {
@@ -41,7 +42,16 @@ export function validateMarkdownSource(
       } else {
         inFence = false;
       }
+      continue;
     }
+
+    if (!inFence && /^#\s+\S/.test(line)) {
+      h1Lines.push(idx + 1);
+    }
+  }
+
+  if (h1Lines.length > 1) {
+    errors.push("Only one level-1 title heading is allowed. Use ##, ###, or #### for sections inside the note.");
   }
 
   if (/^##\s+Table of Contents/m.test(raw)) {

@@ -22,6 +22,17 @@ test("missing title heading and missing section heading are both flagged", () =>
   assert.ok(result.errors.includes("Must contain at least one section heading, e.g. '## Section Title'."));
 });
 
+test("multiple level-1 headings are rejected", () => {
+  const result = validateMarkdown("# Title\n\n## Section\n\ncontent\n\n# Another Title\n\nmore content\n");
+  assert.equal(result.ok, false);
+  assert.ok(result.errors.includes("Only one level-1 title heading is allowed. Use ##, ###, or #### for sections inside the note."));
+});
+
+test("hash headings inside fenced code blocks do not count as extra level-1 headings", () => {
+  const result = validateMarkdown("# Title\n\n## Section\n\n```md\n# Example inside code\n```\n");
+  assert.equal(result.ok, true);
+});
+
 test("a fenced code block with no language is a warning, not an error", () => {
   const raw = "# Title\n\n## Section\n\n```\nno language\n```\n";
   const result = validateMarkdown(raw);

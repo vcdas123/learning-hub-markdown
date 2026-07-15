@@ -28,6 +28,20 @@ test("missing title and missing section are both anchored near line 1, not to un
   assert.ok(diagnostics.every((d) => d.severity === "error" && d.line === 1));
 });
 
+test("extra level-1 headings are anchored to the extra heading lines", () => {
+  const raw = "# Title\n\n## Section\n\ncontent\n\n# Another Title\n\n# Third Title\n";
+  const diagnostics = getMarkdownDiagnostics(raw);
+  assert.deepEqual(
+    diagnostics.filter((d) => d.message.includes("Only one level-1")).map((d) => d.line),
+    [7, 9],
+  );
+});
+
+test("level-1-looking text inside fenced code has no diagnostic", () => {
+  const raw = "# Title\n\n## Section\n\n```md\n# Example inside code\n```\n";
+  assert.deepEqual(getMarkdownDiagnostics(raw), []);
+});
+
 test("an empty note is a single error on line 1", () => {
   assert.deepEqual(getMarkdownDiagnostics("   \n\n "), [
     { message: "The note is empty.", severity: "error", line: 1 },
