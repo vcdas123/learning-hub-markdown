@@ -1,3 +1,5 @@
+import { CODE_FENCE_ERROR } from "../constants/authoringRules.js";
+
 export interface MarkdownDiagnosticItem {
   message: string;
   severity: "error" | "warning";
@@ -61,7 +63,7 @@ export function getMarkdownDiagnostics(raw: string): MarkdownDiagnosticItem[] {
       if (!inFence) {
         if (!value.slice(3).trim()) {
           diagnostics.push({
-            message: "A code block has no language. Add a language after the opening fence, e.g. ```sql, ```python, or ```text.",
+            message: CODE_FENCE_ERROR,
             severity: "error",
             line: idx + 1,
           });

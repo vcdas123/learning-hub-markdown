@@ -1,5 +1,6 @@
 import { type MarkdownToken, parseMarkdownSource } from "../parser/markdownIt.js";
 import type { MarkdownValidationResult } from "../types/diagnostic.js";
+import { CODE_FENCE_ERROR } from "../constants/authoringRules.js";
 
 // Copied verbatim from learning-hub-backend/src/utils/markdownValidator.ts —
 // Phase 3 of the shared Markdown package migration. `tokens` is accepted for
@@ -36,7 +37,7 @@ export function validateMarkdownSource(
     if (value.startsWith("```")) {
       if (!inFence) {
         if (!value.slice(3).trim()) {
-          errors.push("A code block has no language. Add a language after the opening fence, e.g. ```sql, ```python, or ```text.");
+          errors.push(CODE_FENCE_ERROR);
         }
         inFence = true;
       } else {
