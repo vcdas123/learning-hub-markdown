@@ -1,10 +1,12 @@
 # @learning-hub/markdown
 
-Shared Markdown package for [Learning Hub](https://github.com/vcdas123) — the single source of truth for Markdown-related constants, prompts, slug helpers, and types used by both `learning-hub-frontend` and `learning-hub-backend`.
+Shared Markdown package for [Learning Hub](https://github.com/vcdas123) — the single source of truth for Markdown-related constants, prompts, slug helpers, parsing, validation, formatting, and types used by both `learning-hub-frontend` and `learning-hub-backend`.
+
+> Note: `package.json`'s `description` field still says "Phase 1: foundation only — no parser/validator logic yet." That's stale — the source has moved well past that; parser, validator, and formatter logic all exist and are in active use by both apps today (see below).
 
 ## Purpose
 
-Without a shared package, the format guide, prompt templates, slug/anchor-id generation, and shared type shapes can silently drift between the frontend and backend. This package exists so both apps consume the same values instead of maintaining parallel copies.
+Without a shared package, the format guide, prompt templates, slug/anchor-id generation, parsing/validation logic, and shared type shapes can silently drift between the frontend and backend. This package exists so both apps consume the same implementation instead of maintaining parallel copies.
 
 ## Architecture
 
@@ -18,34 +20,61 @@ learning-hub-frontend
 learning-hub-backend
 ```
 
-Both apps install this package and import from it. Eventually every Markdown rule, parser, validator, and guide will live here.
+Both apps depend on this package (as a GitHub dependency, see Install below) and import from it.
 
-## Current phase — Phase 5 (all planned phases complete)
+## What it exports
 
-- **Phase 1 — foundation.** Purely static/utility content:
-  - `constants/` — the note-format guide (`NOTE_FORMAT_GUIDE`), its rules (`MARKDOWN_RULES`), the supported block list (`SUPPORTED_BLOCKS`), and the reference example note (`EXAMPLE_MARKDOWN`).
-  - `prompts/` — the AI "generate a note" and "restructure a note" prompt templates (`AI_PROMPT`, `RESTRUCTURE_PROMPT`).
-  - `slug/` — `slugify()`, the pure string-transform used for both URL slugs and heading-anchor ids. (Note/module slug *generation*, which is DB-counter/crypto/time dependent, stays in `learning-hub-backend`.)
-  - `types/` — shared shapes for `Block`, `Inline`, `Section`, `TocEntry`, `ParsedNote`, `NoteFormatGuide`, and a `MarkdownValidationResult` diagnostic type.
-- **Phase 2 — parser.** `parser/` — the `markdown-it` config (`markdownIt`, `parseMarkdownSource`, `stripBoilerplate`), the token-to-block converter (`tokensToBlocks`, `convertInline`), the section builder (`groupSections`), the TOC builder (`buildToc`), and the top-level orchestrator (`transformMarkdownTokens`).
-- **Phase 3 — validator.** `validator/` — `validateMarkdownSource(raw, cleaned, tokens)` plus a `validateMarkdown(raw)` convenience entry point for callers with only raw text (used by the frontend's realtime validation). Notes must be complete Markdown (`.md`) documents that follow every required rule; Learning Hub rejects invalid notes. Every fenced code block must declare its language/type after the opening backticks. Use the actual language when known (` ```sql`, ` ```python`, etc.), or ` ```text` when no specific language applies. Bare fenced code blocks are blocking errors.
-- **Phase 4 — full backend replacement.** `learning-hub-backend` no longer has its own parser/transformer/validator implementation at all — it imports directly from this package. The Phase 2/3 compatibility wrapper files were deleted.
-- **Phase 5 — formatter + editor integration.** `formatter/` — `formatMarkdown(raw)`, a whitespace/blank-line normalizer (blank line before/after headings and fenced code blocks, collapsed blank-line runs, trimmed trailing whitespace, exactly one trailing newline; fence-aware and idempotent). Never touches note content, only formatting conventions. The frontend's `MarkdownCodeEditor` wires `validateMarkdown()` into a real CodeMirror `linter()`/`lintGutter()` extension (inline gutter dots + hover tooltips + the native diagnostics panel) and adds an "Auto Fix" button that applies `formatMarkdown()`.
+Everything below is re-exported from the package root (`src/index.ts`) and imported as `@learning-hub/markdown`.
 
-**Zero behavior change** was the goal through Phase 4 for all pre-existing code paths — `tests/parser.test.ts` and `tests/validator.test.ts` assert against the reference example note to catch drift. Phase 5 is genuinely new functionality (neither app had a formatter or CodeMirror linting before), covered by `tests/formatter.test.ts` (idempotency, fence-awareness, blank-line rules).
+- **`constants/`** — `NOTE_FORMAT_GUIDE` (the composed note-format guide object: version, summary, rules, structure, supported blocks, example note, and both prompts), `MARKDOWN_RULES`, `SUPPORTED_BLOCKS` (+ `SupportedBlockType`), `EXAMPLE_MARKDOWN` (the reference example note), and the authoring-rule strings `MARKDOWN_VALIDATION_NOTICE` / `CODE_FENCE_RULE` / `CODE_FENCE_ERROR`.
+- **`prompts/`** — `AI_PROMPT` (the "generate a note" prompt template) and `RESTRUCTURE_PROMPT` (the "restructure an existing note" prompt template).
+- **`slug/`** — `slugify(text)`, the pure string-transform used for both URL slugs and heading-anchor ids. Note/module slug *generation* (DB-counter/crypto/time dependent) stays in `learning-hub-backend`.
+- **`types/`** — `Block`, `Section`, `TocEntry`, `ParsedNote`, and `MarkdownValidationResult`.
+- **`parser/`** — `markdownIt` (the configured `markdown-it` instance), `parseMarkdownSource`, `stripBoilerplate`, `tokensToBlocks`, `groupSections`, `buildToc`, and the top-level orchestrator `transformMarkdownTokens(tokens): ParsedNote`.
+- **`validator/`** — `validateMarkdownSource(raw, cleaned, tokens)`, the convenience wrapper `validateMarkdown(raw): MarkdownValidationResult` for callers with only raw text (used by the frontend's realtime validation), and `getMarkdownDiagnostics(raw): MarkdownDiagnosticItem[]` — a line-aware companion returning `{ message, severity, line }` items, used to anchor inline editor diagnostics at the correct line instead of defaulting to line 1.
+- **`formatter/`** — `formatMarkdown(raw)`, a whitespace/blank-line normalizer (blank line before/after headings and fenced code blocks, collapsed blank-line runs, trimmed trailing whitespace, exactly one trailing newline; fence-aware and idempotent). It never touches note content, only formatting conventions — used by the frontend's "Auto Fix" editor button.
 
-## Future roadmap
+Notes must be complete Markdown (`.md`) documents that follow every rule in `MARKDOWN_RULES` — Learning Hub rejects invalid notes. Every fenced code block must declare its language (` ```sql`, ` ```python`, etc., or ` ```text` if none applies); a bare fenced code block is a blocking validation error.
 
-All originally planned phases are complete. Possible future work (not yet scoped): replacing each app's remaining direct format-guide fetch with this package's `NOTE_FORMAT_GUIDE` outright (currently additive only — the backend still serves its own `GET /api/note-format`), and richer per-line diagnostic positions once the validator tracks line numbers instead of aggregate message strings.
+Tests live in `tests/` (`smoke`, `parser`, `validator`, `formatter`, `getMarkdownDiagnostics`, `stripBoilerplate`) and assert against the reference `EXAMPLE_MARKDOWN` note to catch drift.
 
-## Install
+## Build / typecheck
 
 ```bash
-npm install github:vcdas123/learning-hub-markdown
+npm run build      # tsc -p tsconfig.json -> dist/
+npm run prepare    # runs build (fires automatically on install, since this is a git dependency)
+npm run typecheck  # tsc --noEmit
+npm run test       # build, then run tests with node --test against dist/tests/*.test.js
 ```
+
+Runtime dependency: `markdown-it`. Dev dependencies: `typescript`, `@types/node`, `@types/markdown-it`.
+
+## Install / consumption
+
+Both `learning-hub-frontend` and `learning-hub-backend` depend on this package straight from GitHub — not a local workspace or `file:` path:
+
+```json
+"@learning-hub/markdown": "github:vcdas123/learning-hub-markdown"
+```
+
+`npm install` in either app clones this repo, then runs its `prepare` script (`npm run build`) so `dist/` is generated on install. The package is ESM-only (`"type": "module"`); consumers resolve it through the `exports` field to `dist/src/index.js` / `dist/src/index.d.ts`.
 
 ## Usage
 
 ```ts
-import { SUPPORTED_BLOCKS, NOTE_FORMAT_GUIDE, slugify } from "@learning-hub/markdown";
+import {
+  NOTE_FORMAT_GUIDE,
+  SUPPORTED_BLOCKS,
+  slugify,
+  validateMarkdown,
+  formatMarkdown,
+  parseMarkdownSource,
+  transformMarkdownTokens,
+} from "@learning-hub/markdown";
+
+const { tokens } = parseMarkdownSource(rawMarkdown);
+const parsedNote = transformMarkdownTokens(tokens);
+const { ok, errors, warnings } = validateMarkdown(rawMarkdown);
+const formatted = formatMarkdown(rawMarkdown);
+const slug = slugify("My Note Title"); // "my-note-title"
 ```
