@@ -36,7 +36,7 @@ export function validateMarkdownSource(
     if (value.startsWith("```")) {
       if (!inFence) {
         if (!value.slice(3).trim()) {
-          warnings.push("A code block has no language (use ```sql, ```python, etc.).");
+          errors.push("A code block has no language. Add a language after the opening fence, e.g. ```sql, ```python, or ```text.");
         }
         inFence = true;
       } else {

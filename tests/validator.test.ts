@@ -33,11 +33,12 @@ test("hash headings inside fenced code blocks do not count as extra level-1 head
   assert.equal(result.ok, true);
 });
 
-test("a fenced code block with no language is a warning, not an error", () => {
+test("a fenced code block with no language is an error", () => {
   const raw = "# Title\n\n## Section\n\n```\nno language\n```\n";
   const result = validateMarkdown(raw);
-  assert.equal(result.ok, true);
-  assert.ok(result.warnings.some((w) => w.includes("no language")));
+  assert.equal(result.ok, false);
+  assert.ok(result.errors.some((w) => w.includes("no language")));
+  assert.deepEqual(result.warnings, []);
 });
 
 test("a manual Table of Contents / Navigation section is a warning", () => {

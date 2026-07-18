@@ -6,11 +6,11 @@ test("the reference example note has no diagnostics", () => {
   assert.deepEqual(getMarkdownDiagnostics(EXAMPLE_MARKDOWN), []);
 });
 
-test("anchors a missing-language code fence warning to its actual line, not line 1", () => {
+test("anchors a missing-language code fence error to its actual line, not line 1", () => {
   const raw = "# Title\n\n## Section\n\ntext\n\n```\nno language here\n```\n";
   const diagnostics = getMarkdownDiagnostics(raw);
   assert.equal(diagnostics.length, 1);
-  assert.equal(diagnostics[0].severity, "warning");
+  assert.equal(diagnostics[0].severity, "error");
   assert.equal(diagnostics[0].line, 7); // the ``` opening fence line
 });
 

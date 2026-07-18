@@ -61,8 +61,8 @@ export function getMarkdownDiagnostics(raw: string): MarkdownDiagnosticItem[] {
       if (!inFence) {
         if (!value.slice(3).trim()) {
           diagnostics.push({
-            message: "A code block has no language (use ```sql, ```python, etc.).",
-            severity: "warning",
+            message: "A code block has no language. Add a language after the opening fence, e.g. ```sql, ```python, or ```text.",
+            severity: "error",
             line: idx + 1,
           });
         }
