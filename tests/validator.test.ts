@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { validateMarkdown, validateMarkdownSource, EXAMPLE_MARKDOWN } from "../src/index.js";
+import { CODE_FENCE_ERROR, validateMarkdown, validateMarkdownSource, EXAMPLE_MARKDOWN } from "../src/index.js";
 
 test("the reference example note is valid with no errors/warnings", () => {
   const result = validateMarkdown(EXAMPLE_MARKDOWN);
@@ -37,7 +37,7 @@ test("a fenced code block with no language is an error", () => {
   const raw = "# Title\n\n## Section\n\n```\nno language\n```\n";
   const result = validateMarkdown(raw);
   assert.equal(result.ok, false);
-  assert.ok(result.errors.some((w) => w.includes("no language")));
+  assert.ok(result.errors.includes(CODE_FENCE_ERROR));
   assert.deepEqual(result.warnings, []);
 });
 

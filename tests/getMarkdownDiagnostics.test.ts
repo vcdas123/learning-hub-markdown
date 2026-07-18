@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { getMarkdownDiagnostics, EXAMPLE_MARKDOWN } from "../src/index.js";
+import { CODE_FENCE_ERROR, getMarkdownDiagnostics, EXAMPLE_MARKDOWN } from "../src/index.js";
 
 test("the reference example note has no diagnostics", () => {
   assert.deepEqual(getMarkdownDiagnostics(EXAMPLE_MARKDOWN), []);
@@ -12,6 +12,7 @@ test("anchors a missing-language code fence error to its actual line, not line 1
   assert.equal(diagnostics.length, 1);
   assert.equal(diagnostics[0].severity, "error");
   assert.equal(diagnostics[0].line, 7); // the ``` opening fence line
+  assert.equal(diagnostics[0].message, CODE_FENCE_ERROR);
 });
 
 test("anchors a manual Table of Contents warning to its actual line", () => {
